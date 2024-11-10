@@ -23,7 +23,7 @@ seattle_transf<- seattle %>%
         mutate(DAY_NUM = 1:length(DATE))
 
                      
-# Construim el gràfic en espiral
+# Construim el gràfic en espiral. Podem observar els mesos més calurosos contra els mesos més freds
 
 ggplot(seattle_transf, aes(DAY_NUM %% 365,
                             0.15*DAY_NUM + TMAX_C/2, height = TMAX_C, fill = TMAX_C)) + 
