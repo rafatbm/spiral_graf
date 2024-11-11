@@ -2,6 +2,7 @@
 
 library(tidyverse)
 library(igraph)
+library(ggraph)
 
 
 
@@ -46,11 +47,39 @@ ggplot(seattle_transf, aes(DAY_NUM %% 365,
 
 
 
-# Crear un grafo de ejemplo
+# Modifiquem el fitxer que hem trobat a Kaggle sobre accidents a la ciutat de Barcelona per treballar.lo amb
+# Tableau.
 
-nodes <- data.frame(name = c("A", "B", "C", "D", "E"))
-edges <- data.frame(from = c("A", "A", "A", "B", "C", "D"), 
-                    to = c("B", "C", "D", "E", "D", "E")) # Convertir a objeto grafo 
-g <- graph_from_data_frame(d = edges, vertices = nodes, directed = FALSE) # Configurar el layout dirigido por fuerza 
-layout <- layout_with_fr(g) # Plotear el grafo 
-plot(g, layout = layout)
+barcelona <- read.csv("bcn_2016_accidents.csv", header = TRUE, sep = ",")
+
+# Seleccionem nomes aquelles columnes amb les quals treballarem.
+
+barcelona_accidents <- barcelona %>%
+        mutate(Accidents = 1) %>% 
+        filter(Nom.districte != "Desconegut") %>% 
+        select("Nom.districte","Nom.barri","Mes.de.any","Accidents") %>% 
+        group_by(Nom.districte,Nom.barri,Mes.de.any) %>% 
+        summarize(Accidents = sum(Accidents)) %>%
+        ungroup() %>%
+        #select("Nom.districte", "Nom.barri", "Dia.setmana","Mes.de.any","Accidents") %>% 
+        arrange(Nom.districte)
+
+# Contruim un df amb les arestes basat en els accidents
+
+edges <- barcelona_accidents %>% 
+        select(Nom.districte, Nom.barri)
+
+# Creem el graf
+
+g <- graph_from_data_frame(d = edges, directed = FALSE)
+
+
+
+# Gràfic
+
+ggraph(g, layout = "fr") + 
+        geom_edge_link(aes(edge_alpha = 0.8, edge_width = 0.5)) + 
+        geom_node_point(aes(color = factor(name)), size = 5) + 
+        geom_node_text(aes(label = name), vjust = 1, hjust = 1) +
+        theme_void() +
+        labs(title = "Force-Directed Graph de Accidentes")
